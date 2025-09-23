@@ -1,42 +1,57 @@
-# Interactive Grid Streamlit App
+# Interactive Grid App
 
-A bare bones Streamlit app with an interactive grid that you can click on to toggle cell colors.
+A simple NiceGUI app with an interactive grid that you can click on to toggle cell colors.
 
 ## Features
 
 - Interactive grid with clickable cells
 - Toggle cells between blue and black colors
 - User-configurable grid size (1-50 x 1-50)
-- Clear all cells functionality
-- Random pattern generation
-- Grid state visualization
+- Real-time grid resizing
+- Clean, minimal interface
 
 ## Installation
 
-1. Install the required dependencies:
+1. Create and activate a virtual environment:
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+```
+
+2. Install the required dependencies:
 ```bash
 pip install -r requirements.txt
 ```
 
 ## Usage
 
-Run the Streamlit app:
+Run the NiceGUI app:
 ```bash
-streamlit run app.py
+python app.py
 ```
+
+The app will start on `http://localhost:8080`
 
 ## How to Use
 
-1. Adjust the grid size using the width and height controls
-2. Click on any cell to toggle it between blue (🔵) and black (⚫)
-3. Use the "Clear All" button to reset all cells to black
-4. Use the "Random Pattern" button to generate a random pattern
-5. The "Blue Cells" metric shows how many cells are currently blue
+1. Adjust the grid size using the width and height number inputs
+2. Click on any cell to toggle it between blue and black
+3. The grid resizes automatically as you change the dimensions
+4. All data is cleared when you resize the grid
 
 ## Project Structure
 
 - `cell.py` - Cell class representing individual grid cells
 - `grid.py` - Grid class managing the grid state
-- `app.py` - Main Streamlit application
+- `app.py` - Main NiceGUI application
+- `tests/` - Unit tests for the grid functionality
 - `requirements.txt` - Python dependencies
+
+## Testing
+
+Run the tests:
+```bash
+cd tests
+python -m pytest test_grid.py -v
+```
 
