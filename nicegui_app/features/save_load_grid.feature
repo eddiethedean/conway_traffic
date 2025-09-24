@@ -1,10 +1,9 @@
-Feature: Save and load grid
+Feature: Save and Load Grid
 
-  Scenario: User saves a grid and loads it back
-    Given the grid is initialized with width 5 and height 5
-    When the user toggles cell (2, 2) to blue
-    And the user saves the grid
-    And the user clears all cells
-    And the user loads the grid
-    Then cell (2, 2) should be blue
-    And all other cells should be black
+  Scenario: Save and load grid with blue and orange cells
+    Given the app is running
+    And I set some cells to orange and blue
+    When I click the "Save Grid" button
+    And I click the "Clear All" button
+    And I click the "Load Grid" button
+    Then the previously set orange and blue cells should be restored
