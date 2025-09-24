@@ -1,10 +1,12 @@
 from nicegui import ui
-from nicegui_app.grid import Grid
+from grid import Grid
 
 
 class InteractiveGridApp:
-    def __init__(self):
-        self.grid = Grid(10, 10)
+    def __init__(self, width=42, height=25):
+        self.width = width
+        self.height = height
+        self.grid = Grid(width, height)
         self.width_input = None
         self.height_input = None
         self.blue_count_label = None
@@ -109,8 +111,8 @@ class InteractiveGridApp:
         
         # Controls
         with ui.row().classes('w-full gap-4 items-end'):
-            self.width_input = ui.number('Width', value=10, min=1, max=50)
-            self.height_input = ui.number('Height', value=10, min=1, max=50)
+            self.width_input = ui.number('Width', value=self.width, min=1, max=1000)
+            self.height_input = ui.number('Height', value=self.height, min=1, max=1000)
             ui.button('Resize Grid', on_click=self.resize_grid)
             ui.button('Clear All', on_click=self.clear_all)
         
@@ -129,12 +131,12 @@ class InteractiveGridApp:
         self.update_blue_count()
 
 
-def main():
-    """Main function to run the app"""
+@ui.page('/')
+def main_page() -> InteractiveGridApp:
     app = InteractiveGridApp()
     app.create_ui()
-    ui.run(port=8080, title='Interactive Grid')
+    return app
 
 
 if __name__ in {"__main__", "__mp_main__"}:
-    main()
+    ui.run()

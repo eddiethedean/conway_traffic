@@ -1,4 +1,4 @@
-from nicegui_app.cell import Cell
+from cell import Cell
 
 class Grid:
     def __init__(self, width, height):
