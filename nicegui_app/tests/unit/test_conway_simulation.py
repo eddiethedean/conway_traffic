@@ -1,5 +1,6 @@
 import pytest
-from grid_persistence import Grid
+from models import Grid
+
 
 def run_conway_step(grid: Grid) -> Grid:
     width, height = grid.width, grid.height
@@ -20,6 +21,7 @@ def run_conway_step(grid: Grid) -> Grid:
             else:
                 new_grid.cells[y][x].is_blue = live_neighbors == 3
     return new_grid
+
 
 def test_blinker_oscillator():
     grid = Grid(5, 5)
@@ -47,6 +49,7 @@ def test_blinker_oscillator():
             if (x, y) not in [(1, 2), (2, 2), (3, 2)]:
                 assert not grid.cells[y][x].is_blue
 
+
 def test_block_still_life():
     grid = Grid(4, 4)
     grid.cells[1][1].is_blue = True
@@ -58,6 +61,7 @@ def test_block_still_life():
     for y in range(4):
         for x in range(4):
             assert grid.cells[y][x].is_blue == grid2.cells[y][x].is_blue
+
 
 def test_lonely_cell_dies():
     grid = Grid(3, 3)

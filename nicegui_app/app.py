@@ -1,182 +1,147 @@
-from functools import partial
-from grid_persistence import run_conway_step
-from nicegui import ui
+"""Conway Traffic Simulation App - Main application."""
+
 import os
-from grid_persistence import Grid as PersistentGrid
-
-default_save_path = os.path.join(os.path.dirname(__file__), "saved_grid.json")
-
-
+import threading
+import time
+from functools import partial
 from typing import Optional
+
+from nicegui import ui
 from nicegui.elements.number import Number
 from nicegui.elements.label import Label
 from nicegui.elements.column import Column
 
+from models import Grid
+from simulation import run_conway_step
+from ui import GRID_CSS
 
+DEFAULT_SAVE_PATH = os.path.join(os.path.dirname(__file__), "saved_grid.json")
 
-import threading
-import time
 
 class InteractiveGridApp:
-    simulation_running: bool = False
-    simulation_thread: threading.Thread = None
-    run_button: any = None
+    """Main application class for Conway Traffic simulation."""
+
+    def __init__(self, width: int = 42, height: int = 25) -> None:
+        """Initialize the application.
+
+        Args:
+            width: Initial grid width
+            height: Initial grid height
+        """
+        self.width = width
+        self.height = height
+        self.grid = Grid(width, height)
+        self.save_path = DEFAULT_SAVE_PATH
+
+        # UI components
+        self.width_input: Optional[Number] = None
+        self.height_input: Optional[Number] = None
+        self.traffic_count_label: Optional[Label] = None
+        self.grid_container: Optional[Column] = None
+        self.run_button: Optional[ui.button] = None
+
+        # Simulation state
+        self.simulation_running: bool = False
+        self.simulation_thread: Optional[threading.Thread] = None
+
     def run_simulation_step(self) -> None:
-        self.grid = run_conway_step(self.grid)
+        """Run a single simulation step."""
+        self.grid.apply_conway_step()
         self.create_grid()
-        self.update_blue_count()
+        self.update_traffic_count()
 
     def run_simulation_continuous(self) -> None:
+        """Start continuous simulation."""
         if self.simulation_running:
             return
+
         self.simulation_running = True
         if self.run_button:
-            self.run_button.text = 'Stop'
-        def loop():
+            self.run_button.text = "Stop"
+
+        def simulation_loop():
+            """Simulation loop running in separate thread."""
             while self.simulation_running:
-                self.grid = run_conway_step(self.grid)
+                self.grid.apply_conway_step()
                 self.create_grid()
-                self.update_blue_count()
+                self.update_traffic_count()
                 time.sleep(0.2)
-        self.simulation_thread = threading.Thread(target=loop, daemon=True)
+
+        self.simulation_thread = threading.Thread(target=simulation_loop, daemon=True)
         self.simulation_thread.start()
 
     def stop_simulation(self) -> None:
+        """Stop continuous simulation."""
         self.simulation_running = False
         if self.run_button:
-            self.run_button.text = 'Run'
+            self.run_button.text = "Run"
 
-    width: int
-    height: int
-    grid: PersistentGrid
-    width_input: Optional[Number]
-    height_input: Optional[Number]
-    blue_count_label: Optional[Label]
-    grid_container: Optional[Column]
-    save_path: str
-
-    def __init__(self, width: int = 42, height: int = 25) -> None:
-        self.width = width
-        self.height = height
-        self.grid = PersistentGrid(width, height)
-        self.width_input = None
-        self.height_input = None
-        self.blue_count_label = None
-        self.grid_container = None
-        self.save_path = default_save_path
-
-    def update_blue_count(self) -> None:
-        """Update the blue cell count display"""
-        if self.blue_count_label:
-            orange_count = sum(
-                1 for row in self.grid.cells for cell in row if cell.is_blue
-            )
-            self.blue_count_label.text = f"Orange cells: {orange_count}"
+    def update_traffic_count(self) -> None:
+        """Update the traffic count display."""
+        if self.traffic_count_label:
+            active_count = self.grid.count_active_cells()
+            self.traffic_count_label.text = f"Active traffic elements: {active_count}"
 
     def on_cell_click(self, x: int, y: int) -> None:
-        """Cycle cell color: black -> orange -> blue -> black"""
-        cell = self.grid.get_cell(x, y)
-        # color_state: 0=black, 1=orange, 2=blue
-        prev_state = getattr(cell, 'color_state', None)
-        if prev_state is None:
-            cell.color_state = 1  # Always start with orange on first click
-        else:
-            cell.color_state = (cell.color_state + 1) % 3
-        if cell.color_state == 0:
-            cell.is_blue = False
-        elif cell.color_state == 1:
-            cell.is_blue = True
-        elif cell.color_state == 2:
-            cell.is_blue = True
+        """Cycle cell color: black -> orange -> blue -> black."""
+        self.grid.cycle_cell_color(x, y)
         self.create_grid()
-        self.update_blue_count()
+        self.update_traffic_count()
 
     def resize_grid(self) -> None:
-        """Resize the grid based on input values"""
+        """Resize the grid based on input values."""
+        if self.width_input is None or self.height_input is None:
+            return
+
         try:
             new_width = int(self.width_input.value)
             new_height = int(self.height_input.value)
 
             if new_width > 0 and new_height > 0:
                 self.grid.resize(new_width, new_height)
+                self.width = new_width
+                self.height = new_height
                 self.create_grid()
-            else:
-                pass  # Invalid input, do nothing
-        except ValueError:
-            pass  # Invalid input, do nothing
+        except (ValueError, TypeError):
+            # Invalid input, do nothing
+            pass
 
     def clear_all(self) -> None:
-        """Clear all cells"""
-        for row in self.grid.cells:
-            for cell in row:
-                cell.is_blue = False
-                if hasattr(cell, 'color_state'):
-                    cell.color_state = 0
+        """Clear all cells to black (empty road) state."""
+        self.grid.clear_all()
         self.create_grid()
-        self.update_blue_count()
+        self.update_traffic_count()
 
     def save_grid(self) -> None:
         self.grid.save_to_file(self.save_path)
         ui.notify(f"Grid saved to {self.save_path}")
 
     def load_grid(self) -> None:
+        """Load grid from saved file."""
         if os.path.exists(self.save_path):
-            loaded_grid = PersistentGrid.load_from_file(self.save_path)
-            self.grid = loaded_grid
-            self.width = loaded_grid.width
-            self.height = loaded_grid.height
+            self.grid = Grid.load_from_file(self.save_path)
+            self.width = self.grid.width
+            self.height = self.grid.height
+
             if self.width_input:
                 self.width_input.value = self.width
             if self.height_input:
                 self.height_input.value = self.height
+
             self.create_grid()
-            self.update_blue_count()
-            ui.notify(f"Grid loaded from {self.save_path}")
+            self.update_traffic_count()
+            ui.notify(f"Traffic pattern loaded from {self.save_path}")
         else:
-            ui.notify(f"No saved grid found at {self.save_path}", color="negative")
+            ui.notify(f"No saved pattern found at {self.save_path}", color="negative")
 
     def create_grid(self) -> None:
-        """Create the grid display"""
+        """Create the grid display."""
         if self.grid_container:
             self.grid_container.clear()
 
             with self.grid_container:
-                # Create CSS for perfect grid
-                ui.add_head_html(
-                    """
-                <style>
-                .grid-container {
-                    display: grid;
-                    gap: 0px;
-                    margin: 20px 0;
-                }
-                .grid-cell {
-                    width: 40px;
-                    height: 40px;
-                    border: 1px solid #ccc;
-                    cursor: pointer;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    font-size: 12px;
-                    color: white;
-                    transition: background-color 0.2s;
-                }
-                .grid-cell.orange {
-                    background-color: orange;
-                }
-                .grid-cell.blue {
-                    background-color: #2196F3;
-                }
-                .grid-cell.black {
-                    background-color: #333333;
-                }
-                .grid-cell:hover {
-                    opacity: 0.8;
-                }
-                </style>
-                """
-                )
+                # Add CSS styles
+                ui.add_head_html(GRID_CSS)
 
                 # Create grid container
                 grid_style = f"grid-template-columns: repeat({self.grid.width}, 40px);"
@@ -184,10 +149,11 @@ class InteractiveGridApp:
                     for y in range(self.grid.height):
                         for x in range(self.grid.width):
                             cell = self.grid.get_cell(x, y)
-                            color_state = getattr(cell, 'color_state', 1 if cell.is_blue else 0)
-                            if color_state == 2:
+
+                            # Determine color class based on cell state
+                            if cell.is_blue_traffic():
                                 color_class = "blue"
-                            elif color_state == 1:
+                            elif cell.is_orange():
                                 color_class = "orange"
                             else:
                                 color_class = "black"
@@ -196,33 +162,34 @@ class InteractiveGridApp:
                             cell_div = ui.html(
                                 f'<div class="grid-cell {color_class}"></div>'
                             )
-                            cell_div.on(
-                                "click", partial(self.on_cell_click, x, y)
-                            )
-
+                            cell_div.on("click", partial(self.on_cell_click, x, y))
 
     def create_ui(self) -> None:
-        """Create the user interface"""
-        ui.page_title("Interactive Grid")
+        """Create the user interface."""
+        ui.page_title("Conway Traffic Simulation")
 
         # Header
-        ui.html("<h1>Interactive Grid</h1>")
-        ui.html("<p>Click on cells to toggle between orange and black</p>")
+        ui.html("<h1>🚗 Conway Traffic Simulation</h1>")
+        ui.html(
+            "<p>Click cells to cycle: Empty Road (black) → Traffic Barrier (orange) → Moving Traffic (blue)</p>"
+        )
 
         # Controls
-        with ui.row().classes('w-full gap-4 items-end'):
-            self.width_input = ui.number('Width', value=self.width, min=1, max=1000)
-            self.height_input = ui.number('Height', value=self.height, min=1, max=1000)
-            ui.button('Resize Grid', on_click=self.resize_grid)
-            ui.button('Clear All', on_click=self.clear_all)
-            ui.button('Save Grid', on_click=self.save_grid)
-            ui.button('Load Grid', on_click=self.load_grid)
-            self.run_button = ui.button('Run', on_click=self.toggle_simulation)
+        with ui.row().classes("w-full gap-4 items-end"):
+            self.width_input = ui.number("Width", value=self.width, min=1, max=1000)
+            self.height_input = ui.number("Height", value=self.height, min=1, max=1000)
+            ui.button("Resize Grid", on_click=self.resize_grid)
+            ui.button("Clear All", on_click=self.clear_all)
+            ui.button("Save Pattern", on_click=self.save_grid)
+            ui.button("Load Pattern", on_click=self.load_grid)
+            self.run_button = ui.button(
+                "Start Simulation", on_click=self.toggle_simulation
+            )
 
         # Grid info
         with ui.row().classes("w-full gap-4"):
             ui.html(f"<p>Grid size: {self.grid.width} x {self.grid.height}</p>")
-            self.blue_count_label = ui.label("Orange cells: 0")
+            self.traffic_count_label = ui.label("Active traffic elements: 0")
 
         # Create grid container
         self.grid_container = ui.column()
@@ -230,10 +197,11 @@ class InteractiveGridApp:
         # Create the grid
         self.create_grid()
 
-        # Update blue count
-        self.update_blue_count()
+        # Update traffic count
+        self.update_traffic_count()
 
     def toggle_simulation(self) -> None:
+        """Toggle simulation on/off."""
         if not self.simulation_running:
             self.run_simulation_continuous()
         else:
@@ -242,6 +210,7 @@ class InteractiveGridApp:
 
 @ui.page("/")
 def main_page() -> InteractiveGridApp:
+    """Main page route."""
     app = InteractiveGridApp()
     app.create_ui()
     return app

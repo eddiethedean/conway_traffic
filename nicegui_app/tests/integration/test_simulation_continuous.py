@@ -1,7 +1,9 @@
 import pytest
 import time
 from unittest.mock import patch
-from grid_persistence import Grid, run_conway_step
+from models import Grid
+from simulation import run_conway_step
+
 
 class DummyApp:
     def __init__(self, width=5, height=5):

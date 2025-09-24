@@ -1,6 +1,6 @@
 import os
 import pytest
-from grid_persistence import Grid
+from models import Grid
 
 
 def test_save_and_load_grid(tmp_path):

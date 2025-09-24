@@ -1,12 +1,14 @@
 import pytest
-from grid_persistence import Grid, run_conway_step
+from models import Grid
+from simulation import run_conway_step
+
 
 # --- Cell color cycling logic ---
 def test_cell_color_cycling():
     grid = Grid(3, 3)
     cell = grid.get_cell(1, 1)
     # Initial state: black
-    assert not hasattr(cell, 'color_state') or cell.color_state == 0
+    assert not hasattr(cell, "color_state") or cell.color_state == 0
     # First click: orange
     cell.color_state = 1
     assert cell.color_state == 1
@@ -16,6 +18,7 @@ def test_cell_color_cycling():
     # Third click: black
     cell.color_state = 0
     assert cell.color_state == 0
+
 
 # --- Clear all ---
 def test_clear_all():
@@ -34,6 +37,7 @@ def test_clear_all():
             assert not cell.is_blue
             assert cell.color_state == 0
 
+
 # --- Save/load grid ---
 def test_save_load(tmp_path):
     grid = Grid(2, 2)
@@ -46,6 +50,7 @@ def test_save_load(tmp_path):
     loaded = Grid.load_from_file(str(file))
     assert loaded.cells[0][0].is_blue and loaded.cells[0][0].color_state == 2
     assert loaded.cells[1][1].is_blue and loaded.cells[1][1].color_state == 1
+
 
 # --- Simulation only updates blue cells ---
 def test_simulation_only_updates_blue():
@@ -70,12 +75,14 @@ def test_simulation_only_updates_blue():
     # Center blue cell updates by rules
     assert new_grid.cells[1][1].color_state in (0, 2)
 
+
 # --- Resize grid ---
 def test_resize_grid():
     grid = Grid(2, 2)
     grid.resize(3, 3)
     assert grid.width == 3 and grid.height == 3
     assert len(grid.cells) == 3 and len(grid.cells[0]) == 3
+
 
 # --- Blue/orange cell count ---
 def test_orange_blue_count():
@@ -84,7 +91,11 @@ def test_orange_blue_count():
     grid.cells[0][0].color_state = 2
     grid.cells[1][1].is_blue = True
     grid.cells[1][1].color_state = 1
-    orange = sum(1 for row in grid.cells for cell in row if getattr(cell, 'color_state', 0) == 1)
-    blue = sum(1 for row in grid.cells for cell in row if getattr(cell, 'color_state', 0) == 2)
+    orange = sum(
+        1 for row in grid.cells for cell in row if getattr(cell, "color_state", 0) == 1
+    )
+    blue = sum(
+        1 for row in grid.cells for cell in row if getattr(cell, "color_state", 0) == 2
+    )
     assert orange == 1
     assert blue == 1

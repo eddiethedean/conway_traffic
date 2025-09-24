@@ -1,5 +1,5 @@
 import pytest
-from cell import Cell
+from models import Cell
 
 
 class TestCell:

@@ -1,6 +1,5 @@
 import pytest
-from cell import Cell
-from grid import Grid
+from models import Cell, Grid
 from app import InteractiveGridApp
 
 
@@ -9,15 +8,25 @@ class TestCell:
         cell = Cell(5, 10)
         assert cell.x == 5
         assert cell.y == 10
-        assert cell.is_blue == False
+        assert cell.color_state == 0  # black
+        assert not cell.is_blue
 
-    def test_cell_toggle(self):
+    def test_cell_color_cycling(self):
         cell = Cell(1, 2)
-        assert cell.is_blue == False
-        cell.toggle()
-        assert cell.is_blue == True
-        cell.toggle()
-        assert cell.is_blue == False
+        assert cell.color_state == 0  # black
+        assert not cell.is_blue
+
+        cell.cycle_color()
+        assert cell.color_state == 1  # orange
+        assert cell.is_blue  # orange is considered "active"
+
+        cell.cycle_color()
+        assert cell.color_state == 2  # blue
+        assert cell.is_blue
+
+        cell.cycle_color()
+        assert cell.color_state == 0  # back to black
+        assert not cell.is_blue
 
 
 class TestGrid:
@@ -34,21 +43,24 @@ class TestGrid:
         assert cell.x == 1
         assert cell.y == 1
 
-    def test_toggle_cell(self):
+    def test_cycle_cell_color(self):
         grid = Grid(3, 3)
-        grid.toggle_cell(1, 1)
-        assert grid.get_cell(1, 1).is_blue == True
-        assert grid.get_cell(0, 0).is_blue == False
+        grid.cycle_cell_color(1, 1)
+        assert grid.get_cell(1, 1).color_state == 1  # orange
+        grid.cycle_cell_color(1, 1)
+        assert grid.get_cell(1, 1).color_state == 2  # blue
+        assert grid.get_cell(0, 0).color_state == 0  # black
 
     def test_resize_grid(self):
         grid = Grid(3, 3)
-        grid.toggle_cell(0, 0)
+        grid.cycle_cell_color(0, 0)
         grid.resize(5, 5)
         assert grid.width == 5
         assert grid.height == 5
-        for row in grid.cells:
-            for cell in row:
-                assert cell.is_blue == False
+        # Original cell should be preserved
+        assert grid.get_cell(0, 0).color_state == 1
+        # New cells should be black
+        assert grid.get_cell(4, 4).color_state == 0
 
 
 class TestApp:
@@ -61,17 +73,17 @@ class TestApp:
 
     def test_on_cell_click(self):
         app = InteractiveGridApp()
-        assert app.grid.get_cell(3, 3).is_blue == False
+        assert app.grid.get_cell(3, 3).color_state == 0
         app.on_cell_click(3, 3)
-        assert app.grid.get_cell(3, 3).is_blue == True
+        assert app.grid.get_cell(3, 3).color_state == 1  # orange
 
     def test_clear_all(self):
         app = InteractiveGridApp()
-        app.grid.toggle_cell(1, 1)
-        app.grid.toggle_cell(2, 2)
-        assert app.grid.get_cell(1, 1).is_blue == True
-        assert app.grid.get_cell(2, 2).is_blue == True
+        app.grid.cycle_cell_color(1, 1)
+        app.grid.cycle_cell_color(2, 2)
+        assert app.grid.get_cell(1, 1).color_state == 1
+        assert app.grid.get_cell(2, 2).color_state == 1
 
         app.clear_all()
-        assert app.grid.get_cell(1, 1).is_blue == False
-        assert app.grid.get_cell(2, 2).is_blue == False
+        assert app.grid.get_cell(1, 1).color_state == 0
+        assert app.grid.get_cell(2, 2).color_state == 0
