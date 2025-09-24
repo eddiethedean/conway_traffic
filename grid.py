@@ -1,58 +1,30 @@
-from typing import List
 from cell import Cell
 
-
 class Grid:
-    """Manages a grid of cells with X by Y dimensions."""
-    
-    def __init__(self, width: int, height: int):
+    def __init__(self, width, height):
         self.width = width
         self.height = height
         self.cells = []
-        self._initialize_grid()
-    
-    def _initialize_grid(self):
-        """Initialize the grid with empty cells."""
-        self.cells = []
-        for y in range(self.height):
+        for y in range(height):
             row = []
-            for x in range(self.width):
-                row.append(Cell(x, y, is_blue=False))
+            for x in range(width):
+                row.append(Cell(x, y))
             self.cells.append(row)
     
-    def get_cell(self, x: int, y: int) -> Cell:
-        """Get a cell at the specified coordinates."""
-        if 0 <= x < self.width and 0 <= y < self.height:
-            return self.cells[y][x]
-        return None
+    def get_cell(self, x, y):
+        if not (0 <= x < self.width and 0 <= y < self.height):
+            raise IndexError("Cell coordinates out of bounds")
+        return self.cells[y][x]
     
-    def toggle_cell(self, x: int, y: int):
-        """Toggle a cell's color at the specified coordinates."""
-        cell = self.get_cell(x, y)
-        if cell:
-            cell.toggle()
+    def toggle_cell(self, x, y):
+        self.cells[y][x].toggle()
     
-    def resize(self, new_width: int, new_height: int):
-        """Resize the grid to new dimensions."""
+    def resize(self, new_width, new_height):
         self.width = new_width
         self.height = new_height
-        self._initialize_grid()
-    
-    def get_blue_cells(self) -> List[Cell]:
-        """Get all blue cells in the grid."""
-        blue_cells = []
-        for row in self.cells:
-            for cell in row:
-                if cell.is_blue:
-                    blue_cells.append(cell)
-        return blue_cells
-    
-    def clear_all(self):
-        """Clear all cells (set to black)."""
-        for row in self.cells:
-            for cell in row:
-                cell.set_black()
-    
-    def __repr__(self):
-        return f"Grid({self.width}x{self.height})"
-
+        self.cells = []
+        for y in range(new_height):
+            row = []
+            for x in range(new_width):
+                row.append(Cell(x, y))
+            self.cells.append(row)
