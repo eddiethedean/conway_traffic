@@ -133,7 +133,7 @@ def main():
     """Main function to run the app"""
     app = InteractiveGridApp()
     app.create_ui()
-    ui.run(port=8080)
+    ui.run(port=8080, title='Interactive Grid')
 
 
 if __name__ in {"__main__", "__mp_main__"}:
