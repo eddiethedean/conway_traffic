@@ -1,5 +1,5 @@
 from nicegui import ui
-from grid import Grid
+from nicegui_app.grid import Grid
 
 
 class InteractiveGridApp:

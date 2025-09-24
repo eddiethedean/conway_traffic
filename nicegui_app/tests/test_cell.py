@@ -1,5 +1,5 @@
 import pytest
-from cell import Cell
+from nicegui_app.cell import Cell
 
 
 class TestCell:

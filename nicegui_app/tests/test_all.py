@@ -1,7 +1,7 @@
 import pytest
-from cell import Cell
-from grid import Grid
-from app import InteractiveGridApp
+from nicegui_app.cell import Cell
+from nicegui_app.grid import Grid
+from nicegui_app.app import InteractiveGridApp
 
 
 class TestCell:
