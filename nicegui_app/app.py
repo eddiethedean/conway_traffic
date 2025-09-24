@@ -1,16 +1,19 @@
 from nicegui import ui
-from grid import Grid
+import os
+from grid_persistence import Grid as PersistentGrid
+default_save_path = os.path.join(os.path.dirname(__file__), 'saved_grid.json')
 
 
 class InteractiveGridApp:
     def __init__(self, width=42, height=25):
         self.width = width
         self.height = height
-        self.grid = Grid(width, height)
+        self.grid = PersistentGrid(width, height)
         self.width_input = None
         self.height_input = None
         self.blue_count_label = None
         self.grid_container = None
+        self.save_path = default_save_path
         
     def update_blue_count(self):
         """Update the blue cell count display"""
@@ -50,6 +53,26 @@ class InteractiveGridApp:
                 cell.is_blue = False
         self.create_grid()
         self.update_blue_count()
+
+    def save_grid(self):
+        self.grid.save_to_file(self.save_path)
+        ui.notify(f"Grid saved to {self.save_path}")
+
+    def load_grid(self):
+        if os.path.exists(self.save_path):
+            loaded_grid = PersistentGrid.load_from_file(self.save_path)
+            self.grid = loaded_grid
+            self.width = loaded_grid.width
+            self.height = loaded_grid.height
+            if self.width_input:
+                self.width_input.value = self.width
+            if self.height_input:
+                self.height_input.value = self.height
+            self.create_grid()
+            self.update_blue_count()
+            ui.notify(f"Grid loaded from {self.save_path}")
+        else:
+            ui.notify(f"No saved grid found at {self.save_path}", color='negative')
     
     def create_grid(self):
         """Create the grid display"""
@@ -115,6 +138,8 @@ class InteractiveGridApp:
             self.height_input = ui.number('Height', value=self.height, min=1, max=1000)
             ui.button('Resize Grid', on_click=self.resize_grid)
             ui.button('Clear All', on_click=self.clear_all)
+            ui.button('Save Grid', on_click=self.save_grid)
+            ui.button('Load Grid', on_click=self.load_grid)
         
         # Grid info
         with ui.row().classes('w-full gap-4'):
