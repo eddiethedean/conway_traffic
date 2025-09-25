@@ -467,9 +467,9 @@ class TestGridSimulationIntegration:
         
         # Orange barriers should remain
         assert grid.get_cell(1, 1).is_orange()
-        assert grid.get_cell(1, 3).is_orange()
-        assert grid.get_cell(3, 1).is_orange()
-        assert grid.get_cell(3, 3).is_orange()
+        assert grid.get_cell(2, 1).is_orange()
+        assert grid.get_cell(1, 2).is_orange()
+        assert grid.get_cell(2, 2).is_orange()
 
 
 class TestGridEdgeCases:
@@ -496,10 +496,13 @@ class TestGridEdgeCases:
         """Test operations on single row grid."""
         grid = Grid(5, 1)
         
-        # Set pattern in single row
+        # Set pattern in single row - create a blinker pattern
         grid.cycle_cell_color(1, 0)  # orange
+        grid.cycle_cell_color(1, 0)  # blue
         grid.cycle_cell_color(2, 0)  # orange
+        grid.cycle_cell_color(2, 0)  # blue
         grid.cycle_cell_color(3, 0)  # orange
+        grid.cycle_cell_color(3, 0)  # blue
         
         # Should be able to apply Conway step
         grid.apply_conway_step()
@@ -511,10 +514,13 @@ class TestGridEdgeCases:
         """Test operations on single column grid."""
         grid = Grid(1, 5)
         
-        # Set pattern in single column
+        # Set pattern in single column - create a blinker pattern
         grid.cycle_cell_color(0, 1)  # orange
+        grid.cycle_cell_color(0, 1)  # blue
         grid.cycle_cell_color(0, 2)  # orange
+        grid.cycle_cell_color(0, 2)  # blue
         grid.cycle_cell_color(0, 3)  # orange
+        grid.cycle_cell_color(0, 3)  # blue
         
         # Should be able to apply Conway step
         grid.apply_conway_step()

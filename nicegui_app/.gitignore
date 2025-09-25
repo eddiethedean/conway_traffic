@@ -49,6 +49,16 @@ coverage.xml
 .hypothesis/
 .pytest_cache/
 
+# Test artifacts and temporary files
+test_*.json
+*_test_grid.json
+test_grid.json
+saved_grid.json
+test_saved_grid.json
+
+# Type checking cache
+.mypy_cache/
+
 # Jupyter Notebook
 .ipynb_checkpoints
 

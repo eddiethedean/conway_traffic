@@ -23,21 +23,21 @@ class TestConwayPatterns:
         create_blinker_pattern(grid)
         
         # Initial state: horizontal line
-        assert grid.cells[2][1].is_blue_traffic()
-        assert grid.cells[2][2].is_blue_traffic()
-        assert grid.cells[2][3].is_blue_traffic()
+        assert grid.cells[1][0].is_blue_traffic()
+        assert grid.cells[1][1].is_blue_traffic()
+        assert grid.cells[1][2].is_blue_traffic()
         
         # After 1 step: should become vertical
         new_grid = run_conway_step(grid)
-        assert new_grid.cells[1][2].is_blue_traffic()
-        assert new_grid.cells[2][2].is_blue_traffic()
-        assert new_grid.cells[3][2].is_blue_traffic()
+        assert new_grid.cells[0][1].is_blue_traffic()
+        assert new_grid.cells[1][1].is_blue_traffic()
+        assert new_grid.cells[2][1].is_blue_traffic()
         
         # After 2 steps: should return to horizontal (oscillates every 2 steps)
         final_grid = run_conway_step(new_grid)
-        assert final_grid.cells[2][1].is_blue_traffic()
-        assert final_grid.cells[2][2].is_blue_traffic()
-        assert final_grid.cells[2][3].is_blue_traffic()
+        assert final_grid.cells[1][0].is_blue_traffic()
+        assert final_grid.cells[1][1].is_blue_traffic()
+        assert final_grid.cells[1][2].is_blue_traffic()
     
     def test_block_still_life(self):
         """Test that block pattern remains stable."""
@@ -50,10 +50,10 @@ class TestConwayPatterns:
             current_grid = run_conway_step(current_grid)
         
         # Block should remain unchanged
+        assert current_grid.cells[0][0].is_blue_traffic()
+        assert current_grid.cells[0][1].is_blue_traffic()
+        assert current_grid.cells[1][0].is_blue_traffic()
         assert current_grid.cells[1][1].is_blue_traffic()
-        assert current_grid.cells[1][2].is_blue_traffic()
-        assert current_grid.cells[2][1].is_blue_traffic()
-        assert current_grid.cells[2][2].is_blue_traffic()
     
     def test_single_cell_dies(self):
         """Test that isolated cells die."""
@@ -96,30 +96,30 @@ class TestTrafficBarriers:
         
         # Orange barriers should remain unchanged
         assert current_grid.cells[1][1].is_orange()
-        assert current_grid.cells[1][3].is_orange()
-        assert current_grid.cells[3][1].is_orange()
-        assert current_grid.cells[3][3].is_orange()
+        assert current_grid.cells[2][1].is_orange()
+        assert current_grid.cells[1][2].is_orange()
+        assert current_grid.cells[2][2].is_orange()
     
     def test_traffic_around_barriers(self):
         """Test that traffic evolves normally around barriers."""
         grid = Grid(5, 5)
         create_barrier_pattern(grid)
         
-        # Center blue cell should evolve
-        assert grid.cells[2][2].is_blue_traffic()
+        # Blue cell should be present
+        assert grid.cells[1][0].is_blue_traffic()
         
         # Run one step
         new_grid = run_conway_step(grid)
         
         # Traffic should evolve according to Conway rules
-        # (center cell with 0 neighbors should die)
-        assert new_grid.cells[2][2].is_black()
+        # The blue cell at (1,0) should die due to underpopulation
+        assert new_grid.cells[1][0].is_black()
         
         # But barriers remain
         assert new_grid.cells[1][1].is_orange()
-        assert new_grid.cells[1][3].is_orange()
-        assert new_grid.cells[3][1].is_orange()
-        assert new_grid.cells[3][3].is_orange()
+        assert new_grid.cells[2][1].is_orange()
+        assert new_grid.cells[1][2].is_orange()
+        assert new_grid.cells[2][2].is_orange()
 
 
 class TestSimulationEdgeCases:
@@ -220,17 +220,17 @@ class TestGridIntegration:
         grid.resize(5, 5)
         
         # Verify pattern is preserved in new grid
-        assert grid.cells[2][1].is_blue_traffic()
-        assert grid.cells[2][2].is_blue_traffic()
-        assert grid.cells[2][3].is_blue_traffic()
+        assert grid.cells[1][0].is_blue_traffic()
+        assert grid.cells[1][1].is_blue_traffic()
+        assert grid.cells[1][2].is_blue_traffic()
         
         # Run simulation on resized grid
         grid.apply_conway_step()
         
         # Should still oscillate correctly
-        assert grid.cells[1][2].is_blue_traffic()
-        assert grid.cells[2][2].is_blue_traffic()
-        assert grid.cells[3][2].is_blue_traffic()
+        assert grid.cells[0][1].is_blue_traffic()
+        assert grid.cells[1][1].is_blue_traffic()
+        assert grid.cells[2][1].is_blue_traffic()
     
     def test_save_load_with_simulation(self):
         """Test that saved/loaded grids work correctly with simulation."""
@@ -247,17 +247,17 @@ class TestGridIntegration:
         loaded_grid = Grid.load_from_file("test_simulation.json")
         
         # Verify loaded grid has original pattern
-        assert loaded_grid.cells[2][1].is_blue_traffic()
-        assert loaded_grid.cells[2][2].is_blue_traffic()
-        assert loaded_grid.cells[2][3].is_blue_traffic()
+        assert loaded_grid.cells[1][0].is_blue_traffic()
+        assert loaded_grid.cells[1][1].is_blue_traffic()
+        assert loaded_grid.cells[1][2].is_blue_traffic()
         
         # Run simulation on loaded grid
         loaded_grid.apply_conway_step()
         
-        # Should evolve the same way
-        assert loaded_grid.cells[1][2].is_blue_traffic()
-        assert loaded_grid.cells[2][2].is_blue_traffic()
-        assert loaded_grid.cells[3][2].is_blue_traffic()
+        # Should evolve the same way (horizontal to vertical)
+        assert loaded_grid.cells[0][1].is_blue_traffic()
+        assert loaded_grid.cells[1][1].is_blue_traffic()
+        assert loaded_grid.cells[2][1].is_blue_traffic()
         
         # Cleanup
         import os

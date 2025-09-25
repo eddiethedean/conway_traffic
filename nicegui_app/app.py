@@ -4,7 +4,7 @@ import os
 import threading
 import time
 from functools import partial
-from typing import Optional
+from typing import Optional, List
 
 from nicegui import ui
 from nicegui.elements.number import Number
@@ -39,6 +39,12 @@ class InteractiveGridApp:
         self.traffic_count_label: Optional[Label] = None
         self.grid_container: Optional[Column] = None
         self.run_button: Optional[ui.button] = None
+        
+        # Store references to cell elements for efficient updates
+        self.cell_elements: List[List[ui.html]] = []
+        
+        # Track simulation steps for UI updates
+        self.simulation_step_count = 0
 
         # Simulation state
         self.simulation_running: bool = False
@@ -63,9 +69,16 @@ class InteractiveGridApp:
             """Simulation loop running in separate thread."""
             while self.simulation_running:
                 self.grid.apply_conway_step()
-                self.create_grid()
+                self.simulation_step_count += 1
+                
+                # Update traffic count every step
                 self.update_traffic_count()
-                time.sleep(0.2)
+                
+                # Update grid every 5 steps (0.25 seconds) to show progress
+                if self.simulation_step_count % 5 == 0:
+                    self.create_grid()
+                
+                time.sleep(0.05)
 
         self.simulation_thread = threading.Thread(target=simulation_loop, daemon=True)
         self.simulation_thread.start()
@@ -73,8 +86,12 @@ class InteractiveGridApp:
     def stop_simulation(self) -> None:
         """Stop continuous simulation."""
         self.simulation_running = False
+        self.simulation_step_count = 0
         if self.run_button:
             self.run_button.text = "Run"
+        
+        # Update the grid to show the final state
+        self.create_grid()
 
     def update_traffic_count(self) -> None:
         """Update the traffic count display."""
@@ -138,6 +155,9 @@ class InteractiveGridApp:
         """Create the grid display."""
         if self.grid_container:
             self.grid_container.clear()
+            
+            # Initialize cell elements array
+            self.cell_elements = []
 
             with self.grid_container:
                 # Add CSS styles
@@ -147,6 +167,7 @@ class InteractiveGridApp:
                 grid_style = f"grid-template-columns: repeat({self.grid.width}, 40px);"
                 with ui.column().classes("grid-container").style(grid_style):
                     for y in range(self.grid.height):
+                        row_elements = []
                         for x in range(self.grid.width):
                             cell = self.grid.get_cell(x, y)
 
@@ -163,6 +184,17 @@ class InteractiveGridApp:
                                 f'<div class="grid-cell {color_class}"></div>'
                             )
                             cell_div.on("click", partial(self.on_cell_click, x, y))
+                            row_elements.append(cell_div)
+                        self.cell_elements.append(row_elements)
+
+    def update_grid(self) -> None:
+        """Update the grid display without recreating the entire grid."""
+        # Only update if grid actually needs updating
+        if self.grid_needs_update:
+            # For now, just recreate the grid but less frequently
+            # This prevents the constant reloading during simulation
+            self.create_grid()
+            self.grid_needs_update = False
 
     def create_ui(self) -> None:
         """Create the user interface."""

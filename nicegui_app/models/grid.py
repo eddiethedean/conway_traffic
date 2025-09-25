@@ -25,7 +25,12 @@ class Grid:
         Args:
             width: Number of columns
             height: Number of rows
+            
+        Raises:
+            ValueError: If dimensions are not positive
         """
+        if width <= 0 or height <= 0:
+            raise ValueError("Grid dimensions must be positive")
         self.width = width
         self.height = height
         self.cells: List[List[Cell]] = []

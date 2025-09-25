@@ -39,32 +39,32 @@ def temp_file() -> Generator[str, None, None]:
 
 def create_blinker_pattern(grid: Grid) -> None:
     """Create a blinker pattern (horizontal line of 3 blue cells)."""
-    if grid.width >= 4 and grid.height >= 3:
-        grid.cells[2][1].set_color_state(2)  # blue
-        grid.cells[2][2].set_color_state(2)  # blue
-        grid.cells[2][3].set_color_state(2)  # blue
+    if grid.width >= 3 and grid.height >= 3:
+        grid.cells[1][0].set_color_state(2)  # blue
+        grid.cells[1][1].set_color_state(2)  # blue
+        grid.cells[1][2].set_color_state(2)  # blue
 
 
 def create_block_pattern(grid: Grid) -> None:
     """Create a block pattern (2x2 square of blue cells)."""
     if grid.width >= 2 and grid.height >= 2:
+        grid.cells[0][0].set_color_state(2)  # blue
+        grid.cells[0][1].set_color_state(2)  # blue
+        grid.cells[1][0].set_color_state(2)  # blue
         grid.cells[1][1].set_color_state(2)  # blue
-        grid.cells[1][2].set_color_state(2)  # blue
-        grid.cells[2][1].set_color_state(2)  # blue
-        grid.cells[2][2].set_color_state(2)  # blue
 
 
 def create_barrier_pattern(grid: Grid) -> None:
     """Create a pattern with orange barriers and blue traffic."""
-    if grid.width >= 4 and grid.height >= 4:
+    if grid.width >= 3 and grid.height >= 3:
         # Orange barriers (static)
         grid.cells[1][1].set_color_state(1)  # orange
-        grid.cells[1][3].set_color_state(1)  # orange
-        grid.cells[3][1].set_color_state(1)  # orange
-        grid.cells[3][3].set_color_state(1)  # orange
+        grid.cells[1][2].set_color_state(1)  # orange
+        grid.cells[2][1].set_color_state(1)  # orange
+        grid.cells[2][2].set_color_state(1)  # orange
         
         # Blue traffic (evolves)
-        grid.cells[2][2].set_color_state(2)  # blue
+        grid.cells[1][0].set_color_state(2)  # blue
 
 
 def assert_grid_states_equal(grid1: Grid, grid2: Grid) -> None:
