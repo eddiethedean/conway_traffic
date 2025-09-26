@@ -49,6 +49,12 @@ class InteractiveGridApp:
         # Simulation state
         self.simulation_running: bool = False
         self.simulation_thread: Optional[threading.Thread] = None
+        
+        # Mouse drag state
+        self.is_dragging: bool = False
+        self.drag_start_x: Optional[int] = None
+        self.drag_start_y: Optional[int] = None
+        self.dragged_cells: List[tuple] = []
 
     def run_simulation_step(self) -> None:
         """Run a single simulation step."""
@@ -104,6 +110,39 @@ class InteractiveGridApp:
         self.grid.cycle_cell_color(x, y)
         self.create_grid()
         self.update_traffic_count()
+
+    def on_cell_mouse_down(self, x: int, y: int) -> None:
+        """Handle mouse down event to start drag operation."""
+        self.is_dragging = True
+        self.drag_start_x = x
+        self.drag_start_y = y
+        self.dragged_cells = [(x, y)]
+
+    def on_cell_mouse_enter(self, x: int, y: int) -> None:
+        """Handle mouse enter event during drag operation."""
+        if self.is_dragging:
+            # Add this cell to the dragged cells if not already present
+            if (x, y) not in self.dragged_cells:
+                self.dragged_cells.append((x, y))
+
+    def on_cell_mouse_up(self, x: int, y: int) -> None:
+        """Handle mouse up event to complete drag operation."""
+        if self.is_dragging:
+            # Apply color cycling to all dragged cells
+            for cell_x, cell_y in self.dragged_cells:
+                # Only cycle cells that are within grid boundaries
+                if 0 <= cell_x < self.grid.width and 0 <= cell_y < self.grid.height:
+                    self.grid.cycle_cell_color(cell_x, cell_y)
+            
+            # Reset drag state
+            self.is_dragging = False
+            self.drag_start_x = None
+            self.drag_start_y = None
+            self.dragged_cells = []
+            
+            # Update the grid and traffic count
+            self.create_grid()
+            self.update_traffic_count()
 
     def resize_grid(self) -> None:
         """Resize the grid based on input values."""
@@ -179,11 +218,14 @@ class InteractiveGridApp:
                             else:
                                 color_class = "black"
 
-                            # Create clickable cell
+                            # Create clickable cell with drag support
                             cell_div = ui.html(
                                 f'<div class="grid-cell {color_class}"></div>'
                             )
                             cell_div.on("click", partial(self.on_cell_click, x, y))
+                            cell_div.on("mousedown", partial(self.on_cell_mouse_down, x, y))
+                            cell_div.on("mouseenter", partial(self.on_cell_mouse_enter, x, y))
+                            cell_div.on("mouseup", partial(self.on_cell_mouse_up, x, y))
                             row_elements.append(cell_div)
                         self.cell_elements.append(row_elements)
 
@@ -203,7 +245,8 @@ class InteractiveGridApp:
         # Header
         ui.html("<h1>🚗 Conway Traffic Simulation</h1>")
         ui.html(
-            "<p>Click cells to cycle: Empty Road (black) → Traffic Barrier (orange) → Moving Traffic (blue)</p>"
+            "<p>Click cells to cycle: Empty Road (black) → Traffic Barrier (orange) → Moving Traffic (blue)<br>"
+            "Or click and drag to change multiple cells at once!</p>"
         )
 
         # Controls
